@@ -4,11 +4,12 @@
       h1.title
     .hero-body
       .container.has-text-centered
-        p.title Welcome to the chat
+        h1.title Welcome to the chat
         p.subtitle Enter your name below
         .field
           .control
             input.input.is-rounded.is-medium(type="text", placeholder="My name is...")
+        button.button.circular.is-info Enter
     .hero-footer
 </template>
 
