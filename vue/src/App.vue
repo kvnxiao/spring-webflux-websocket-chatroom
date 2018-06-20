@@ -37,4 +37,12 @@
     }
   }
 }
+
+button.button.circular.bigger {
+  font-size: 1.25rem;
+  font-weight: 700;
+  height: 3rem;
+  line-height: 2rem;
+  padding: 0 1.5rem;
+}
 </style>

@@ -21,7 +21,7 @@
               h3.title.is-size-4 It seems like there're no rooms beyond this point.
               h3.title.is-size-5 Make your own room!
           hr
-          button.button.is-primary.circular(@click="showModal()") Create a room
+          button.button.is-primary.circular.bigger(@click="showModal()") Create a room
     .hero-footer
     .modal(:class="{ 'is-active': isModal }")
       .modal-background
@@ -87,16 +87,6 @@ export default class Lobby extends Vue {
       font-weight: 700;
       height: 2.5rem;
       padding: 0 1rem;
-    }
-  }
-
-  .hero-body {
-    button.button.circular {
-      font-size: 1.25rem;
-      font-weight: 700;
-      height: 3rem;
-      line-height: 2rem;
-      padding: 0 1.5rem;
     }
   }
 

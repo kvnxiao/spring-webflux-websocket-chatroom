@@ -1,14 +1,18 @@
 <template lang="pug">
   section.room.hero.is-primary.is-fullheight
     .hero-head
-      h1.title Room {{ room }}
+      h1.title You're in room: {{ room }}
     .hero-body
       .container.has-text-centered
-        p.title Chat
+        h1.title Chat
         p.subtitle {{ subtitle }}
         .field
           .control
             input.input.is-rounded.is-medium(type="text", placeholder="Chat here")
+        button.button.circular.bigger.is-info
+          span Send
+          span.icon
+            i.fas.fa-paper-plane
     .hero-footer
 </template>
 
@@ -39,6 +43,13 @@ export default class Home extends Vue {
   .hero-head,
   .hero-footer {
     padding: 2rem;
+  }
+
+  input.input {
+    margin: 0 auto;
+    display: flex;
+    width: 30rem;
+    max-width: 80vw;
   }
 }
 </style>
