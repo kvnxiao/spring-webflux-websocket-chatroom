@@ -1,5 +1,29 @@
 <template lang="pug">
   section.lobby.hero.is-primary.is-fullheight
+    transition(name="fade")
+      .modal.is-active(v-show="isModal")
+        .modal-background
+        .modal-content
+          .box
+            header.modal-head
+              p.modal-card-title.has-text-weight-bold Create a room
+              button.delete(@click="hideModal()", aria-label="close")
+            hr
+            section.modal-body
+              .field
+                p.control.has-icons-left
+                  input.input.is-rounded.is-medium(type="text", placeholder="Room name")
+                  span.icon.is-small.is-left
+                    i.fas.fa-tag
+              .field
+                p.control.has-icons-left
+                  input.input.is-rounded.is-medium(type="text", placeholder="Password")
+                  span.icon.is-small.is-left
+                    i.fas.fa-lock
+            hr
+            footer.modal-footer
+              button.button.circular.is-success Create
+              button.button.circular.is-danger(@click="hideModal()") Cancel
     .hero-head
       h1.title Lobby
     .hero-body
@@ -23,29 +47,6 @@
           hr
           button.button.is-primary.circular.bigger(@click="showModal()") Create a room
     .hero-footer
-    .modal(:class="{ 'is-active': isModal }")
-      .modal-background
-      .modal-content
-        .box
-          header.modal-head
-            p.modal-card-title Create a room
-            button.delete(@click="hideModal()", aria-label="close")
-          hr
-          section.modal-body
-            .field
-              p.control.has-icons-left
-                input.input.is-rounded.is-medium(type="text", placeholder="Room name")
-                span.icon.is-small.is-left
-                  i.fas.fa-tag
-            .field
-              p.control.has-icons-left
-                input.input.is-rounded.is-medium(type="text", placeholder="Password")
-                span.icon.is-small.is-left
-                  i.fas.fa-lock
-          hr
-          footer.modal-footer
-            button.button.circular.is-success Create
-            button.button.circular.is-danger(@click="hideModal()") Cancel
 </template>
 
 <script lang="ts">
@@ -77,10 +78,21 @@ export default class Lobby extends Vue {
 @import "~bulma/sass/utilities/derived-variables";
 @import "~bulma/sass/utilities/mixins";
 
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .lobby {
   .modal-head {
     display: flex;
   }
+
   .modal-footer {
     button.button.circular {
       margin: 0 0.5rem;
@@ -88,11 +100,6 @@ export default class Lobby extends Vue {
       height: 2.5rem;
       padding: 0 1rem;
     }
-  }
-
-  .hero-head,
-  .hero-footer {
-    padding: 2rem;
   }
 
   table.header {
@@ -123,6 +130,7 @@ export default class Lobby extends Vue {
   }
 
   .box {
+    border-radius: 1.5rem;
     box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.302),
       0 1px 3px 1px rgba(60, 64, 67, 0.149);
     transition: all 0.08s linear;

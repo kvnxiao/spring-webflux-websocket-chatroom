@@ -45,4 +45,16 @@ button.button.circular.bigger {
   line-height: 2rem;
   padding: 0 1.5rem;
 }
+
+p.control {
+  margin: 0 auto;
+  display: flex;
+  width: 30rem;
+  max-width: 80vw;
+}
+
+.hero-head,
+.hero-footer {
+  padding: 2rem 2rem 0 2rem;
+}
 </style>

@@ -3,8 +3,14 @@ import Vuex from "vuex"
 
 Vue.use(Vuex)
 
-export default new Vuex.Store({
-  state: {},
+interface RootState {
+  name: string
+}
+
+export default new Vuex.Store<RootState>({
+  state: {
+    name: "",
+  },
   mutations: {},
   actions: {},
 })
