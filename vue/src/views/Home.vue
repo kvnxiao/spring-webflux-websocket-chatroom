@@ -8,8 +8,8 @@
         p.subtitle Enter your name below
         .field
           p.control
-            input.input.is-rounded.is-medium(type="text", placeholder="My name is...", v-model="name")
-        button.button.circular.bigger.is-info
+            input.input.is-rounded.is-medium(type="text", placeholder="My name is...", v-model="name", @keydown.enter="setName")
+        button.button.circular.bigger.is-info(@click="setName")
           span Enter
           span.icon
             i.fas.fa-sign-in-alt
@@ -24,7 +24,8 @@ export default class Home extends Vue {
   private name: string = ""
 
   public setName() {
-    
+    this.$store.commit({ type: "setName", name: this.name })
+    this.$router.push("lobby")
   }
 }
 </script>

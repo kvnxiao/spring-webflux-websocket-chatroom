@@ -33,10 +33,11 @@ export default class Home extends Vue {
 
   public created() {
     this.room = this.$route.params.room
+    this.name = this.$store.getters.getName.name
   }
 
   get subtitle(): string {
-    if (this.name === "") {
+    if (this.name === "" || this.name === undefined) {
       return "Welcome"
     } else {
       return `Hi ${this.name}, type and enter text below to start chatting.`
