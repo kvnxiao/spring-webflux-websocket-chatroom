@@ -73,7 +73,7 @@ subprojects {
         kotlin {
             trimTrailingWhitespace()
             endWithNewline()
-            ktlint("0.15.1")
+            ktlint("0.23.1")
             licenseHeaderFile "${rootProject.projectDir}/LICENSE_HEADER"
         }
     }
