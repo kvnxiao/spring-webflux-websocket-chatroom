@@ -1,0 +1,116 @@
+buildscript {
+    ext.kotlin_version = '1.2.50'
+    ext.dokka_version = '0.9.17'
+    ext.shadow_version = '2.0.4'
+    ext.slf4j_version = '1.7.25'
+    ext.logback_version = '1.2.3'
+    ext.kotlin_logging_version = '1.5.4'
+    ext.spotless_version = '3.13.0'
+
+    repositories {
+        jcenter()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
+        classpath "com.github.jengelman.gradle.plugins:shadow:$shadow_version"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:$spotless_version"
+    }
+}
+
+allprojects {
+    group 'com.github.kvnxiao'
+    version '1.0.0-SNAPSHOT'
+
+    task wrapper(type: Wrapper) {
+        gradleVersion = '4.8'
+        distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+    }
+}
+
+subprojects {
+    repositories {
+        jcenter()
+    }
+
+    apply plugin: 'kotlin'
+    apply plugin: "kotlin-spring"
+    apply plugin: 'jacoco'
+    apply plugin: 'org.jetbrains.dokka'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'com.diffplug.gradle.spotless'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    compileKotlin {
+        kotlinOptions {
+            freeCompilerArgs = ["-Xjsr305=strict"]
+            jvmTarget = "1.8"
+        }
+    }
+    compileTestKotlin {
+        kotlinOptions {
+            freeCompilerArgs = ["-Xjsr305=strict"]
+            jvmTarget = "1.8"
+        }
+    }
+
+    dependencies {
+        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+        implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+        implementation "org.slf4j:slf4j-api:$slf4j_version"
+        implementation "io.github.microutils:kotlin-logging:$kotlin_logging_version"
+        testImplementation "org.slf4j:slf4j-api:$slf4j_version"
+        testImplementation "ch.qos.logback:logback-classic:$logback_version"
+        testImplementation "junit:junit:4.12"
+    }
+
+    spotless {
+        kotlin {
+            trimTrailingWhitespace()
+            endWithNewline()
+            ktlint("0.15.1")
+            licenseHeaderFile "${rootProject.projectDir}/LICENSE_HEADER"
+        }
+    }
+
+    dokka {
+        outputFormat = 'html'
+        outputDirectory = "$buildDir/javadoc"
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+    }
+
+    jacoco {
+        toolVersion = "0.8.1"
+        reportsDir = file("$buildDir/reports")
+    }
+
+    jacocoTestReport.dependsOn test
+    jacocoTestReport {
+        reports {
+            xml.enabled = true
+            xml.destination file("${buildDir}/reports/jacoco/report.xml")
+            csv.enabled = true
+            html.destination file("${buildDir}/reports/jacoco/html")
+            csv.destination file("${buildDir}/reports/jacoco/jacocoTestReport.csv")
+        }
+    }
+}
