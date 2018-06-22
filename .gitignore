@@ -74,3 +74,5 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .vscode
+
+server/src/main/resources/static/*

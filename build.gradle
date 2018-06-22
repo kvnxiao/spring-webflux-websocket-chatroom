@@ -1,11 +1,13 @@
 buildscript {
-    ext.kotlin_version = '1.2.50'
-    ext.dokka_version = '0.9.17'
-    ext.shadow_version = '2.0.4'
-    ext.slf4j_version = '1.7.25'
-    ext.logback_version = '1.2.3'
-    ext.kotlin_logging_version = '1.5.4'
-    ext.spotless_version = '3.13.0'
+    ext {
+        kotlin_version = '1.2.50'
+        dokka_version = '0.9.17'
+        shadow_version = '2.0.4'
+        slf4j_version = '1.7.25'
+        logback_version = '1.2.3'
+        kotlin_logging_version = '1.5.4'
+        spotless_version = '3.13.0'
+    }
 
     repositories {
         jcenter()
@@ -25,7 +27,7 @@ allprojects {
     group 'com.github.kvnxiao'
     version '1.0.0-SNAPSHOT'
 
-    task wrapper(type: Wrapper) {
+    wrapper {
         gradleVersion = '4.8'
         distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
     }

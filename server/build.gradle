@@ -22,7 +22,7 @@ targetCompatibility = 1.8
 
 bootJar {
     baseName = 'spring-webflux-websocket-chatroom-server'
-    version =  '0.1.0'
+    version = '0.1.0'
 }
 
 repositories {
@@ -35,3 +35,20 @@ dependencies {
     testCompile "org.springframework.boot:spring-boot-starter-test"
     testCompile "io.projectreactor:reactor-test"
 }
+
+task yarnBuild(type: Exec, group: "build") {
+    workingDir '../vue/'
+
+    commandLine './build.sh'
+
+    doLast {
+        println(standardOutput.toString())
+    }
+}
+
+task deployResources(type: Copy, group: "build") {
+    from '../vue/dist'
+    into '../server/src/main/resources/static'
+}
+
+bootRun.dependsOn deployResources
