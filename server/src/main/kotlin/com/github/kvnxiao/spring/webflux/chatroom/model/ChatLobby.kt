@@ -13,21 +13,27 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.github.kvnxiao.spring.webflux.chatroom.handlers
+package com.github.kvnxiao.spring.webflux.chatroom.model
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.server.ServerRequest
-import org.springframework.web.reactive.function.server.ServerResponse
-import reactor.core.publisher.Mono
-import reactor.core.publisher.toMono
 
 @Component
-class StatusHandler {
+data class ChatLobby @Autowired constructor(private val mapper: ObjectMapper) {
 
-    companion object {
-        private const val OK = "OK"
+    private val rooms: MutableMap<String, ChatRoom> = mutableMapOf()
+
+    init {
+        // TODO: remove test room and add createRoom functions
+        rooms["test"] = ChatRoom("test-room")
     }
 
-    fun status(request: ServerRequest): Mono<ServerResponse> =
-        ServerResponse.ok().body(OK.toMono(), String::class.java)
+    fun count(): Int = rooms.size
+
+    fun create(room: ChatRoom) = rooms.put(room.name, room)
+
+    fun get(name: String): ChatRoom? = rooms[name]
+
+    fun listRoomsJson(): String = mapper.writeValueAsString(rooms.values)
 }

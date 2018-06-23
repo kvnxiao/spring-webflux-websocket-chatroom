@@ -17,6 +17,7 @@
 </template>
 
 <script lang="ts">
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios"
 import { Component, Vue } from "vue-property-decorator"
 
 @Component
@@ -24,8 +25,18 @@ export default class Home extends Vue {
   private name: string = ""
 
   public setName() {
-    this.$store.commit({ type: "setName", name: this.name })
-    this.$router.push("lobby")
+    axios
+      .post(
+        "/login",
+        { name: this.name },
+        { headers: { "Content-Type": "application/json" } },
+      )
+      .then((res: AxiosResponse) => {
+        if (res.status === 200) {
+          this.$store.commit({ type: "setName", name: this.name })
+          window.location.href = "/lobby"
+        }
+      })
   }
 }
 </script>

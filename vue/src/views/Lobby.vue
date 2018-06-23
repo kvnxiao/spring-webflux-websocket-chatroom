@@ -62,6 +62,24 @@ import { Component, Vue } from "vue-property-decorator"
 export default class Lobby extends Vue {
   private rooms: Room[] = [Room.of(0, "Placeholder room name")]
   private isModal: boolean = false
+  private ws!: WebSocket
+
+  public created() {
+    this.ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + window.location.pathname + "/ws")
+    this.ws.onopen = () => {
+      console.log("onopen", this.ws)
+      console.log("readyState", this.ws.readyState)
+    }
+    this.ws.onmessage = (event: MessageEvent) => {
+      console.log(event.data)
+    }
+    this.ws.onerror = (error: Event) => {
+      console.log(error)
+    }
+    this.ws.onclose = (event: CloseEvent) => {
+      console.log(event)
+    }
+  }
 
   public showModal() {
     this.isModal = true

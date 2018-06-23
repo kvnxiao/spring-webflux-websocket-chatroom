@@ -9,11 +9,11 @@ interface RootState {
 }
 
 export default new Vuex.Store<RootState>({
-  plugins: [
-    createPersistedState({
-      storage: window.sessionStorage,
-    }),
-  ],
+  // plugins: [
+  //   createPersistedState({
+  //     storage: window.sessionStorage,
+  //   }),
+  // ],
   state: {
     name: "",
   },

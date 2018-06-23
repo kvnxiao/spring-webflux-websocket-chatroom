@@ -1,10 +1,13 @@
 buildscript {
     ext {
-        springBootVersion = '2.0.3.RELEASE'
+        springBootVersion = '2.1.0.BUILD-SNAPSHOT'
+        hashidsVersion = '1.0.3'
     }
 
     repositories {
         jcenter()
+        maven { url("https://repo.spring.io/libs-snapshot") }
+        maven { url("https://repo.spring.io/plugins-release/") }
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
@@ -27,11 +30,14 @@ bootJar {
 
 repositories {
     jcenter()
+    maven { url("https://repo.spring.io/milestone") }
+    maven { url("https://repo.spring.io/snapshot") }
 }
 
 dependencies {
     compile "org.springframework.boot:spring-boot-starter-webflux"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin"
+    compile "org.hashids:hashids:${hashidsVersion}"
     testCompile "org.springframework.boot:spring-boot-starter-test"
     testCompile "io.projectreactor:reactor-test"
 }
