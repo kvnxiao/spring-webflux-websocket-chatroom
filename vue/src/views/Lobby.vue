@@ -63,6 +63,8 @@ export default class Lobby extends Vue {
   private rooms: Room[] = [Room.of(0, "Placeholder room name")]
   private isModal: boolean = false
   private ws!: WebSocket
+  private timestamp: number = 0
+  private latencyInterval!: NodeJS.Timer
 
   public created() {
     this.ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + window.location.pathname + "/ws")
@@ -71,14 +73,25 @@ export default class Lobby extends Vue {
       console.log("readyState", this.ws.readyState)
     }
     this.ws.onmessage = (event: MessageEvent) => {
-      console.log(event.data)
+      const data = JSON.parse(event.data)
+      if (data["@type"] === "l") {
+        console.log(`latency is: ${(Date.now() - this.timestamp) / 2}`)
+      } else {
+        console.log(data)
+      }
     }
     this.ws.onerror = (error: Event) => {
       console.log(error)
     }
     this.ws.onclose = (event: CloseEvent) => {
       console.log(event)
+      clearInterval(this.latencyInterval)
     }
+
+    this.latencyInterval = setInterval(() => {
+      this.timestamp = Date.now()
+      this.ws.send(JSON.stringify({ "@type": "l" }))
+    }, 10000)
   }
 
   public showModal() {

@@ -15,13 +15,17 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket
 
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.HeartBeatEvent
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.LatencyEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.socket.WebSocketHandler
+import org.springframework.web.reactive.socket.WebSocketMessage
 import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.publisher.UnicastProcessor
 import java.time.Duration
 
 @Component
@@ -30,10 +34,27 @@ class LobbySocketHandler @Autowired constructor(
 ) : WebSocketHandler {
 
     override fun handle(session: WebSocketSession): Mono<Void> {
-        return session.send(
-            Flux.interval(Duration.ZERO, Duration.ofSeconds(15))
-                .map { session.textMessage(lobby.listRoomsJson()) }
-        ).and(session.receive()
-            .map { it.payloadAsText }.log())
+        val publisher = UnicastProcessor.create<LatencyEvent>()
+        val subscriber = WebSocketSubscriber(publisher)
+
+        val heartbeatFlux = Flux.interval(Duration.ZERO, Duration.ofSeconds(30))
+            .map { session.pingMessage { it.wrap(HeartBeatEvent.byteArray()) } }
+
+        val msgFlux = Flux.interval(Duration.ZERO, Duration.ofSeconds(15))
+            .map { session.textMessage(lobby.listRoomsJson()) }
+
+        val sendFlux = heartbeatFlux.mergeWith(msgFlux)
+
+        val connectingFlux = publisher.publish()
+            .autoConnect()
+            .map { session.textMessage(it.toJson()) }
+
+        return session.send(sendFlux.mergeWith(connectingFlux))
+            .and(session.receive()
+                .filter { it.type == WebSocketMessage.Type.TEXT }
+                .map(WebSocketMessage::getPayloadAsText)
+                .doOnNext(subscriber::onReceive)
+                .doOnError(subscriber::onError)
+                .doOnComplete(subscriber::onComplete))
     }
 }
