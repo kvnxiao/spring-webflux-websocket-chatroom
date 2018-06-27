@@ -1,6 +1,6 @@
-export default class Room {
-  public static of(id: number, name: string): Room {
-    return new Room(id, name)
-  }
-  constructor(readonly id: number, readonly name: string) {}
+export default interface Room {
+  count: number
+  hasPwd: boolean
+  id: string
+  name: string
 }

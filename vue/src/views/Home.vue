@@ -27,7 +27,7 @@ export default class Home extends Vue {
   public setName() {
     axios
       .post(
-        "/login",
+        "/api/login",
         { name: this.name },
         { headers: { "Content-Type": "application/json" } },
       )

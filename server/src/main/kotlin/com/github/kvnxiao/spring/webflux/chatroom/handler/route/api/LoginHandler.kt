@@ -13,29 +13,24 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.github.kvnxiao.spring.webflux.chatroom.handler.route
+package com.github.kvnxiao.spring.webflux.chatroom.handler.route.api
 
-import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.Resource
-import org.springframework.http.MediaType
+import com.github.kvnxiao.spring.webflux.chatroom.model.User
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
+import org.springframework.web.reactive.function.server.bodyToMono
 import reactor.core.publisher.Mono
-import java.net.URI
 
 @Component
-class RoomHandler @Autowired constructor(
-    private val lobby: ChatLobby
-) {
+class LoginHandler {
 
-    fun enterRoom(request: ServerRequest, index: Resource): Mono<ServerResponse> =
-        request.session()
-            .filter { it.attributes.containsKey(Session.USER) }
-            .map { request.pathVariable("id") }
-            .filter { lobby.exists(it) }
-            .flatMap { ServerResponse.ok().contentType(MediaType.TEXT_HTML).syncBody(index) }
-            .switchIfEmpty(ServerResponse.temporaryRedirect(URI.create("/lobby")).build())
+    fun handle(request: ServerRequest): Mono<ServerResponse> =
+        request.bodyToMono<User>()
+            .filter { it.name.isNotBlank() }
+            .map { user -> request.session().subscribe { it.attributes[Session.USER] = user } }
+            .flatMap { ServerResponse.ok().build() }
+            .switchIfEmpty(ServerResponse.status(HttpStatus.UNAUTHORIZED).build())
 }

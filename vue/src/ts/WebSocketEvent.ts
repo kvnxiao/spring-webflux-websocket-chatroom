@@ -1,9 +1,10 @@
 export default interface WebSocketEvent {
-    "@type": EventType
+  "@type": EventType
+  data?: any
 }
 
 export enum EventType {
   HeartBeat = "h",
   LatencyTest = "l",
-  Room_Create = "rc",
+  LobbyList = "lb",
 }

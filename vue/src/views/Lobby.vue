@@ -40,7 +40,7 @@
           .contents
             table.table.is-hoverable.is-fullwidth
               tbody
-                lobby-table-room(v-for="room in rooms", :key="room.id", :roomName="room.name")
+                lobby-table-room(v-for="room in rooms", :key="room.id", :room="room")
             .background
               h3.title.is-size-4 It seems like there're no rooms beyond this point.
               h3.title.is-size-5 Make your own room!
@@ -57,6 +57,7 @@ import NativeWebSocket from "@/ts/NativeWebSocket.ts"
 import NotificationMessage, { NotificationType } from "@/ts/NotificationMessage.ts"
 import Room from "@/ts/Room.ts"
 import WebSocketEvent, { EventType } from "@/ts/WebSocketEvent.ts"
+import axios, {AxiosResponse} from "axios"
 import { Component, Vue } from "vue-property-decorator"
 
 @Component({
@@ -66,7 +67,7 @@ import { Component, Vue } from "vue-property-decorator"
   },
 })
 export default class Lobby extends Vue {
-  private rooms: Room[] = [Room.of(0, "Placeholder room name")]
+  private rooms: Room[] = []
   private isModal: boolean = false
   private ws!: NativeWebSocket<WebSocketEvent>
   private timestamp: number = 0
@@ -89,7 +90,6 @@ export default class Lobby extends Vue {
     this.ws = new NativeWebSocket(undefined, "/ws")
 
     this.ws.onOpen = (event: Event) => {
-      // TODO: show connection toast message
       this.messages.push({ msg: "Connection to the server has been established", type: NotificationType.Success })
     }
 
@@ -103,12 +103,10 @@ export default class Lobby extends Vue {
     }
 
     this.ws.onError = (error: Event) => {
-      // TODO: show error toast message
       this.messages.push({ msg: "An error occurred with the server connection...", type: NotificationType.Danger })
     }
 
     this.ws.onClose = (event: CloseEvent) => {
-      // TODO: show close toast message
       window.clearInterval(this.latencyInterval)
       this.messages.push({ msg: "Connection to the server has been closed.", type: NotificationType.Warning })
     }
@@ -153,6 +151,16 @@ export default class Lobby extends Vue {
             name: this.createRoomName,
             pwd: this.createRoomPwd,
           }
+    axios.post(
+        "/api/createroom",
+        roomReq,
+        { headers: { "Content-Type": "application/json" } },
+    )
+    .then((res: AxiosResponse) => {
+      if (res.status === 200) {
+        window.location.reload()
+      }
+    })
   }
 
   /**
@@ -170,6 +178,17 @@ export default class Lobby extends Vue {
    */
   public parseEvent(data: any) {
     const event = data as WebSocketEvent
+    switch (event["@type"]) {
+      case EventType.HeartBeat:
+        console.log("Received heartbeat from server.")
+        break
+      case EventType.LatencyTest:
+        console.log(`Received latency test from server: ${(Date.now() - this.timestamp) / 2}ms latency.`)
+        break
+      case EventType.LobbyList:
+        this.rooms = event.data as Room[]
+        break
+    }
   }
 }
 </script>

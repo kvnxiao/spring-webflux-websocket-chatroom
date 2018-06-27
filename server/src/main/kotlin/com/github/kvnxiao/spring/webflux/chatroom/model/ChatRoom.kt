@@ -15,10 +15,20 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.model
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.github.kvnxiao.spring.webflux.chatroom.serde.ChatRoomSerializer
 import org.hashids.Hashids
 import java.util.concurrent.atomic.AtomicLong
 
+@JsonSerialize(using = ChatRoomSerializer::class)
 data class ChatRoom(val name: String, val password: String = "") {
+
+    val id: String = generateId()
+    val users: MutableList<User> = mutableListOf()
+
+    fun count(): Int = users.size
+
+    fun hasPassword(): Boolean = password.isNotEmpty()
 
     companion object {
         private val incr = AtomicLong()
@@ -33,11 +43,4 @@ data class ChatRoom(val name: String, val password: String = "") {
                 if (it.isEmpty()) null else it[0]
             }
     }
-
-    val id: String = generateId()
-    val users: MutableList<User> = mutableListOf()
-
-    fun count(): Int = users.size
-
-    fun hasPassword(): Boolean = password.isNotEmpty()
 }

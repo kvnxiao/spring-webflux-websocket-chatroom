@@ -1,23 +1,24 @@
 <template lang="pug">
   tr
-    td {{ roomName }}
+    td {{ room.name }}
     td {{ users }}
     td
-      button.button.is-primary.is-outlined
+      a.button.is-primary.is-outlined(:href="`/room/${room.id}`")
         span.icon
           i.fas.fa-check
         span JOIN
 </template>
 
 <script lang="ts">
+import Room from "@/ts/Room"
 import { Component, Prop, Vue } from "vue-property-decorator"
 
 @Component
 export default class LobbyTableRoom extends Vue {
-  @Prop() private roomName!: string
+  @Prop() private room!: Room
 
   get users(): string {
-    return "0/8"
+    return `${this.room.count}/8`
   }
 }
 </script>

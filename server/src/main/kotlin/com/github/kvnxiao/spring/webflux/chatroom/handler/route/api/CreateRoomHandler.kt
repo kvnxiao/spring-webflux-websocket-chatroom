@@ -13,10 +13,12 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.github.kvnxiao.spring.webflux.chatroom.handler.route
+package com.github.kvnxiao.spring.webflux.chatroom.handler.route.api
 
+import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
-import com.github.kvnxiao.spring.webflux.chatroom.model.User
+import com.github.kvnxiao.spring.webflux.chatroom.model.request.CreateRoomRequest
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
@@ -25,12 +27,15 @@ import org.springframework.web.reactive.function.server.bodyToMono
 import reactor.core.publisher.Mono
 
 @Component
-class LoginHandler {
+class CreateRoomHandler @Autowired constructor(
+    private val lobby: ChatLobby
+) {
 
     fun handle(request: ServerRequest): Mono<ServerResponse> =
-        request.bodyToMono<User>()
-            .filter { it.name.isNotBlank() }
-            .map { user -> request.session().subscribe { it.attributes[Session.USER] = user } }
+        request.session()
+            .filter { it.attributes.containsKey(Session.USER) }
+            .flatMap { request.bodyToMono<CreateRoomRequest>() }
+            .flatMap { lobby.create(it.name, it.password) }
             .flatMap { ServerResponse.ok().build() }
             .switchIfEmpty(ServerResponse.status(HttpStatus.UNAUTHORIZED).build())
 }

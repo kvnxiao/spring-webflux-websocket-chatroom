@@ -15,25 +15,54 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.beans.factory.annotation.Autowired
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.LobbyListEvent
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Mono
+import reactor.core.publisher.toMono
+
+typealias RoomId = String
+typealias RoomName = String
 
 @Component
-data class ChatLobby @Autowired constructor(private val mapper: ObjectMapper) {
+class ChatLobby {
 
-    private val rooms: MutableMap<String, ChatRoom> = mutableMapOf()
+    private val idToRoomsMap: MutableMap<RoomId, ChatRoom> = mutableMapOf()
+    private val userToRoomIdMap: MutableMap<User, RoomId> = mutableMapOf()
+    private val roomNames: MutableSet<RoomName> = mutableSetOf()
 
-    init {
-        // TODO: remove test room and add createRoom functions
-        rooms["test"] = ChatRoom("test-room")
+    fun count(): Mono<Int> = idToRoomsMap.size.toMono()
+
+    fun create(name: String, password: String = ""): Mono<ChatRoom> {
+        return if (roomNames.contains(name)) {
+            Mono.empty()
+        } else {
+            return Mono.just(ChatRoom(name, password))
+                .map {
+                    roomNames.add(it.name)
+                    idToRoomsMap[it.id] = it
+                    return@map it
+                }
+        }
     }
 
-    fun count(): Int = rooms.size
+    fun exists(id: String): Boolean = idToRoomsMap.containsKey(id)
 
-    fun create(room: ChatRoom) = rooms.put(room.name, room)
+    fun get(id: String): Mono<ChatRoom> = Mono.justOrEmpty(idToRoomsMap[id])
 
-    fun get(name: String): ChatRoom? = rooms[name]
+    fun addUserToRoom(user: User, room: ChatRoom): Mono<Void> {
+        return Mono.justOrEmpty(userToRoomIdMap.put(user, room.id)).then()
+    }
 
-    fun listRoomsJson(): String = mapper.writeValueAsString(rooms.values)
+    fun removeUserFromRoom(user: User): Mono<Void> {
+        return Mono.justOrEmpty(userToRoomIdMap.remove(user))
+            .flatMap { roomId -> Mono.justOrEmpty(idToRoomsMap[roomId]) }
+            .filter { it.count() == 0 }
+            .map {
+                roomNames.remove(it.name)
+                idToRoomsMap.remove(it.name)
+            }
+            .then()
+    }
+
+    fun listRoomsJson(): String = LobbyListEvent(idToRoomsMap.values).toJson()
 }

@@ -37,8 +37,8 @@ class WebSocketConfiguration @Autowired constructor(
     @Bean
     fun webSocketMapping(): HandlerMapping {
         return SimpleUrlHandlerMapping().apply {
-            this.order = 1
-            this.urlMap = mapOf<String, WebSocketHandler>(
+            order = 1
+            urlMap = mapOf<String, WebSocketHandler>(
                 "/lobby/ws" to lobbySocketHandler
             )
         }
