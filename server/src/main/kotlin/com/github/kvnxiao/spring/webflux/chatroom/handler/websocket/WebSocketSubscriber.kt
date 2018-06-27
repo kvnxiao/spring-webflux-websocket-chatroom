@@ -17,6 +17,7 @@ package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
+import com.github.kvnxiao.spring.webflux.chatroom.model.User
 import reactor.core.publisher.UnicastProcessor
 import java.io.IOException
 
@@ -24,7 +25,10 @@ import java.io.IOException
  * Represents a WebSocket connection to a browser session, providing event methods to interact with
  * received messages, errors, and completion signals.
  */
-class WebSocketSubscriber<T : WebSocketEvent>(protected val publisher: UnicastProcessor<T>) {
+class WebSocketSubscriber<T : WebSocketEvent>(
+    protected val publisher: UnicastProcessor<T>,
+    protected val user: User
+) {
 
     protected var lastReceivedEvent: T? = null
     private val typeRef: TypeReference<T> = object : TypeReference<T>() {}
@@ -50,6 +54,6 @@ class WebSocketSubscriber<T : WebSocketEvent>(protected val publisher: UnicastPr
     fun onComplete() {
         // no-op
         lastReceivedEvent = null
-        println("User has disconnected")
+        println("$user has disconnected")
     }
 }

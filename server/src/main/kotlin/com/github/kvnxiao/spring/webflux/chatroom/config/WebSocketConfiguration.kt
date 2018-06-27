@@ -16,6 +16,7 @@
 package com.github.kvnxiao.spring.webflux.chatroom.config
 
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.LobbySocketHandler
+import com.github.kvnxiao.spring.webflux.chatroom.model.Session
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -47,7 +48,7 @@ class WebSocketConfiguration @Autowired constructor(
     fun handlerAdapter(): WebSocketHandlerAdapter = object : WebSocketHandlerAdapter() {
         override fun handle(exchange: ServerWebExchange, handler: Any): Mono<HandlerResult> {
             (this.webSocketService as HandshakeWebSocketService)
-                .setSessionAttributePredicate { it == "name" }
+                .setSessionAttributePredicate { it == Session.USER }
             return super.handle(exchange, handler)
         }
     }

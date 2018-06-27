@@ -15,6 +15,7 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.handler.route
 
+import com.github.kvnxiao.spring.webflux.chatroom.model.Session
 import com.github.kvnxiao.spring.webflux.chatroom.model.User
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -29,7 +30,7 @@ class LoginHandler {
     fun handle(request: ServerRequest): Mono<ServerResponse> =
         request.bodyToMono<User>()
             .filter { it.name.isNotBlank() }
-            .map { name -> request.session().subscribe { it.attributes["name"] = name } }
+            .map { user -> request.session().subscribe { it.attributes[Session.USER] = user } }
             .flatMap { ServerResponse.ok().build() }
             .switchIfEmpty(ServerResponse.status(HttpStatus.UNAUTHORIZED).build())
 }

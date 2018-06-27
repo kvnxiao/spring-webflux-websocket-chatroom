@@ -18,6 +18,8 @@ package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.HeartBeatEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.LatencyEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
+import com.github.kvnxiao.spring.webflux.chatroom.model.Session
+import com.github.kvnxiao.spring.webflux.chatroom.model.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.socket.WebSocketHandler
@@ -34,8 +36,9 @@ class LobbySocketHandler @Autowired constructor(
 ) : WebSocketHandler {
 
     override fun handle(session: WebSocketSession): Mono<Void> {
+        val user = session.attributes[Session.USER] as User
         val publisher = UnicastProcessor.create<LatencyEvent>()
-        val subscriber = WebSocketSubscriber(publisher)
+        val subscriber = WebSocketSubscriber(publisher, user)
 
         val heartbeatFlux = Flux.interval(Duration.ZERO, Duration.ofSeconds(30))
             .map { session.pingMessage { it.wrap(HeartBeatEvent.byteArray()) } }

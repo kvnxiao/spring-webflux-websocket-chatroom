@@ -15,6 +15,7 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.handler.route
 
+import com.github.kvnxiao.spring.webflux.chatroom.model.Session
 import org.springframework.core.io.Resource
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
@@ -28,7 +29,7 @@ class LobbyHandler {
 
     fun handle(request: ServerRequest, index: Resource): Mono<ServerResponse> =
         request.session()
-            .filter { it.attributes.containsKey("name") }
+            .filter { it.attributes.containsKey(Session.USER) }
             .flatMap { ServerResponse.ok().contentType(MediaType.TEXT_HTML).syncBody(index) }
             .switchIfEmpty(ServerResponse.temporaryRedirect(URI.create("/")).build())
 }
