@@ -19,6 +19,7 @@ import com.github.kvnxiao.spring.webflux.chatroom.handler.route.LobbyHandler
 import com.github.kvnxiao.spring.webflux.chatroom.handler.route.RoomHandler
 import com.github.kvnxiao.spring.webflux.chatroom.handler.route.StatusHandler
 import com.github.kvnxiao.spring.webflux.chatroom.handler.route.api.CreateRoomHandler
+import com.github.kvnxiao.spring.webflux.chatroom.handler.route.api.GetRoomHandler
 import com.github.kvnxiao.spring.webflux.chatroom.handler.route.api.LoginHandler
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.SpringApplication
@@ -37,6 +38,8 @@ fun main(args: Array<String>) {
 @SpringBootApplication
 class Application {
 
+    // resource related routes
+
     @Bean
     fun resources(): RouterFunction<ServerResponse> = router {
         resources("/**", ClassPathResource("static/"))
@@ -45,11 +48,6 @@ class Application {
     @Bean
     fun status(handler: StatusHandler): RouterFunction<ServerResponse> = router {
         GET("/status", handler::handle)
-    }
-
-    @Bean
-    fun login(handler: LoginHandler): RouterFunction<ServerResponse> = router {
-        POST("/api/login", handler::handle)
     }
 
     @Bean
@@ -66,8 +64,20 @@ class Application {
         }
     }
 
+    // API related routes
+
+    @Bean
+    fun login(handler: LoginHandler): RouterFunction<ServerResponse> = router {
+        POST("/api/login", handler::handle)
+    }
+
     @Bean
     fun createRoom(handler: CreateRoomHandler): RouterFunction<ServerResponse> = router {
         POST("/api/createroom", handler::handle)
+    }
+
+    @Bean
+    fun getRoomInfo(handler: GetRoomHandler): RouterFunction<ServerResponse> = router {
+        POST("/api/getroom", handler::handle)
     }
 }

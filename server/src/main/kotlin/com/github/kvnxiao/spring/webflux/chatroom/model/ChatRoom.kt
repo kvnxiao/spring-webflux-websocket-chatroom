@@ -16,7 +16,7 @@
 package com.github.kvnxiao.spring.webflux.chatroom.model
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.github.kvnxiao.spring.webflux.chatroom.serde.ChatRoomSerializer
+import com.github.kvnxiao.spring.webflux.chatroom.serdes.ChatRoomSerializer
 import org.hashids.Hashids
 import java.util.concurrent.atomic.AtomicLong
 

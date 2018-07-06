@@ -18,11 +18,9 @@ package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.jsontype.NamedType
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatRoom
-import com.github.kvnxiao.spring.webflux.chatroom.serde.ChatRoomSerializer
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
 sealed class WebSocketEvent {

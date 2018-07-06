@@ -1,7 +1,7 @@
 <template lang="pug">
   section.room.hero.is-primary.is-fullheight
     .hero-head
-      h1.title You're in room: {{ room }}
+      h1.title You're in room: {{ roomName }}
     .hero-body
       .container.has-text-centered
         #chat.box
@@ -22,18 +22,29 @@
 </template>
 
 <script lang="ts">
+import axios, {AxiosResponse} from "axios"
 import { Component, Vue } from "vue-property-decorator"
+import Room from "../ts/Room"
 
 @Component
 export default class Home extends Vue {
   private name: string = ""
-  private room: string = ""
+  private roomName: string = "..."
   private messages: string[] = []
   private currMessage: string = ""
 
   public created() {
-    this.room = this.$route.params.room
     this.name = this.$store.getters.getName.name
+    axios.post(
+        "/api/getroom",
+        { id: this.$route.params.room },
+        { headers: { "Content-Type": "application/json" } },
+    )
+    .then((res: AxiosResponse) => {
+      if (res.status === 200) {
+        this.roomName = (res.data as Room).name
+      }
+    })
   }
 
   get subtitle(): string {
