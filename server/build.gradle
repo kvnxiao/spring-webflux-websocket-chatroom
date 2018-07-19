@@ -1,7 +1,7 @@
 buildscript {
     ext {
-        springBootVersion = '2.1.0.BUILD-SNAPSHOT'
-        hashidsVersion = '1.0.3'
+        springboot_version = '2.1.0.BUILD-SNAPSHOT'
+        hashids_version = '1.0.3'
     }
 
     repositories {
@@ -10,7 +10,7 @@ buildscript {
         maven { url("https://repo.spring.io/plugins-release/") }
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springboot_version}")
     }
 }
 
@@ -37,7 +37,7 @@ repositories {
 dependencies {
     compile "org.springframework.boot:spring-boot-starter-webflux"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin"
-    compile "org.hashids:hashids:${hashidsVersion}"
+    compile "org.hashids:hashids:${hashids_version}"
     testCompile "org.springframework.boot:spring-boot-starter-test"
     testCompile "io.projectreactor:reactor-test"
 }

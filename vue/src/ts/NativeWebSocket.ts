@@ -39,16 +39,10 @@ export default class NativeWebSocket<T> {
 
   public send(obj: T) {
     if (typeof obj === "string") {
-      this.sendString(obj)
-    } else if (obj instanceof String) {
-      this.sendString(obj.toString())
+      this.ws.send(obj)
     } else {
       this.ws.send(JSON.stringify(obj))
     }
-  }
-
-  public sendString(str: string) {
-    this.ws.send(str)
   }
 
   public getReadyState(): number {

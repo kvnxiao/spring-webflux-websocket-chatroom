@@ -25,7 +25,7 @@ import java.io.IOException
  * Represents a WebSocket connection to a browser session, providing event methods to interact with
  * received messages, errors, and completion signals.
  */
-class WebSocketSubscriber<T : WebSocketEvent>(
+open class WebSocketSubscriber<T : WebSocketEvent>(
     protected val publisher: UnicastProcessor<T>,
     protected val user: User
 ) {
@@ -42,16 +42,16 @@ class WebSocketSubscriber<T : WebSocketEvent>(
         }
     }
 
-    protected fun onNext(event: T) {
+    protected open fun onNext(event: T) {
         lastReceivedEvent = event
         publisher.onNext(event)
     }
 
-    fun onError(error: Throwable) {
+    open fun onError(error: Throwable) {
         println(error)
     }
 
-    fun onComplete() {
+    open fun onComplete() {
         // no-op
         lastReceivedEvent = null
         println("$user has disconnected")

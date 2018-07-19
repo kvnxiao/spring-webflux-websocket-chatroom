@@ -47,11 +47,11 @@ class ChatLobby {
 
     fun exists(id: String): Boolean = idToRoomsMap.containsKey(id)
 
-    fun get(id: String): Mono<ChatRoom> = Mono.justOrEmpty(idToRoomsMap[id])
+    fun get(id: String): ChatRoom? = idToRoomsMap[id]
 
-    fun addUserToRoom(user: User, room: ChatRoom): Mono<Void> {
-        return Mono.justOrEmpty(userToRoomIdMap.put(user, room.id)).then()
-    }
+    fun getRoom(user: User): ChatRoom? = userToRoomIdMap[user]?.let { idToRoomsMap[it] }
+
+    fun addUserToRoom(user: User, room: ChatRoom) = userToRoomIdMap.put(user, room.id)
 
     fun removeUserFromRoom(user: User): Mono<Void> {
         return Mono.justOrEmpty(userToRoomIdMap.remove(user))

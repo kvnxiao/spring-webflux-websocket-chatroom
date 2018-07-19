@@ -16,8 +16,10 @@
 package com.github.kvnxiao.spring.webflux.chatroom.model
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.serdes.ChatRoomSerializer
 import org.hashids.Hashids
+import reactor.core.publisher.UnicastProcessor
 import java.util.concurrent.atomic.AtomicLong
 
 @JsonSerialize(using = ChatRoomSerializer::class)
@@ -25,6 +27,9 @@ data class ChatRoom(val name: String, val password: String = "") {
 
     val id: String = generateId()
     val users: MutableList<User> = mutableListOf()
+    val eventProcessor: UnicastProcessor<WebSocketEvent> = UnicastProcessor.create()
+    val chatFlux = eventProcessor.publish()
+        .autoConnect(1)
 
     fun count(): Int = users.size
 
@@ -38,9 +43,9 @@ data class ChatRoom(val name: String, val password: String = "") {
             hash.encode(
                 incr.incrementAndGet())
 
-        fun decodeId(code: String): Long? =
+        fun decodeId(code: String): Long =
             hash.decode(code).let {
-                if (it.isEmpty()) null else it[0]
+                if (it.isEmpty()) -1 else it[0]
             }
     }
 }

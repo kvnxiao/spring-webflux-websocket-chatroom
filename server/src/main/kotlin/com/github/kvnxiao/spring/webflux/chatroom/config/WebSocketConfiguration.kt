@@ -15,7 +15,7 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.config
 
-import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.LobbySocketHandler
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.lobby.LobbySocketHandler
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
