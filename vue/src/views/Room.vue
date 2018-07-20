@@ -24,7 +24,10 @@
 <script lang="ts">
 import axios, {AxiosResponse} from "axios"
 import { Component, Vue } from "vue-property-decorator"
+import NativeWebSocket from "../ts/NativeWebSocket"
+import {NotificationType} from "../ts/NotificationMessage"
 import Room from "../ts/Room"
+import WebSocketEvent, {EventType} from "../ts/WebSocketEvent"
 
 @Component
 export default class Home extends Vue {
@@ -32,8 +35,53 @@ export default class Home extends Vue {
   private roomName: string = "..."
   private messages: string[] = []
   private currMessage: string = ""
+  private timestamp: number = 0
+  private latencyInterval!: number
+  private ws!: NativeWebSocket<WebSocketEvent>
+
+  /**
+   * Vue beforeCreate lifecycle hook.
+   *
+   * Initializes WebSocket connection to server and sets the WebSocket event handlers.
+   */
+  public beforeCreate() {
+    // Connect to websocket endpoint
+    this.ws = new NativeWebSocket(undefined, "/ws")
+
+    this.ws.onOpen = (event: Event) => {
+      // this.messages.push({ msg: "Connection to the server has been established", type: NotificationType.Success })
+    }
+
+    this.ws.onMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data)
+        this.parseEvent(data)
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    this.ws.onError = (error: Event) => {
+      // this.messages.push({ msg: "An error occurred with the server connection...", type: NotificationType.Danger })
+    }
+
+    this.ws.onClose = (event: CloseEvent) => {
+      window.clearInterval(this.latencyInterval)
+      // this.messages.push({ msg: "Connection to the server has been closed.", type: NotificationType.Warning })
+    }
+
+    // test for latency in the lobby
+    this.latencyInterval = window.setInterval(() => {
+      if (this.ws.getReadyState() === this.ws.OPEN) {
+        this.timestamp = Date.now()
+        this.ws.send({ "@type": EventType.LatencyTest })
+      }
+    }, 10000)
+  }
 
   public created() {
+    this.ws.connect()
+
     this.name = this.$store.getters.getName.name
     axios.post(
         "/api/getroom",
@@ -59,6 +107,21 @@ export default class Home extends Vue {
     if (this.currMessage !== "") {
       this.messages.push(this.currMessage)
       this.currMessage = ""
+    }
+  }
+
+  /**
+   * Parses incoming WebSocket event data
+   */
+  public parseEvent(data: any) {
+    const event = data as WebSocketEvent
+    switch (event["@type"]) {
+      case EventType.HeartBeat:
+        console.log("Received heartbeat from server.")
+        break
+      case EventType.LatencyTest:
+        console.log(`Received latency test from server: ${(Date.now() - this.timestamp) / 2}ms latency.`)
+        break
     }
   }
 }

@@ -33,6 +33,8 @@ data class ChatRoom(val name: String, val password: String = "") {
 
     fun count(): Int = users.size
 
+    fun isEmpty(): Boolean = users.size == 0
+
     fun hasPassword(): Boolean = password.isNotEmpty()
 
     companion object {

@@ -15,13 +15,12 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.model
 
+import com.github.kvnxiao.spring.webflux.chatroom.util.RoomId
+import com.github.kvnxiao.spring.webflux.chatroom.util.RoomName
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.LobbyListEvent
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
-
-typealias RoomId = String
-typealias RoomName = String
 
 @Component
 class ChatLobby {
@@ -51,17 +50,25 @@ class ChatLobby {
 
     fun getRoom(user: User): ChatRoom? = userToRoomIdMap[user]?.let { idToRoomsMap[it] }
 
-    fun addUserToRoom(user: User, room: ChatRoom) = userToRoomIdMap.put(user, room.id)
+    fun addUserToRoom(user: User, room: ChatRoom) {
+        userToRoomIdMap[user] = room.id
+        room.users.add(user)
+    }
 
-    fun removeUserFromRoom(user: User): Mono<Void> {
-        return Mono.justOrEmpty(userToRoomIdMap.remove(user))
-            .flatMap { roomId -> Mono.justOrEmpty(idToRoomsMap[roomId]) }
-            .filter { it.count() == 0 }
-            .map {
-                roomNames.remove(it.name)
-                idToRoomsMap.remove(it.name)
+    fun removeUserFromRoom(user: User) {
+        val roomId = userToRoomIdMap.remove(user) ?: return
+        val room = idToRoomsMap[roomId] ?: return
+        room.users.remove(user)
+
+        println("Removed user $user from room $room")
+
+        if (room.isEmpty()) {
+            room.name.let {
+                roomNames.remove(it)
+                idToRoomsMap.remove(it)
             }
-            .then()
+            println("Deleted room $room since it is now empty")
+        }
     }
 
     fun listRoomsJson(): String = LobbyListEvent(idToRoomsMap.values).toJson()

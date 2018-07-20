@@ -37,7 +37,7 @@ class GetRoomHandler @Autowired constructor(
         request.session()
             .filter { it.attributes.containsKey(Session.USER) }
             .flatMap { request.bodyToMono<GetRoomRequest>() }
-            .flatMap { lobby.get(it.id) }
+            .map { lobby.get(it.id) }
             .flatMap { ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .syncBody(WebSocketEvent.MAPPER.writeValueAsString(it))

@@ -158,7 +158,7 @@ export default class Lobby extends Vue {
     )
     .then((res: AxiosResponse) => {
       if (res.status === 200) {
-        window.location.reload()
+        console.log(res.data)
       }
     })
   }

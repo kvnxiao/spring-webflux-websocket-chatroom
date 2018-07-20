@@ -27,12 +27,20 @@ import java.io.IOException
  * received messages, errors, and completion signals.
  */
 open class WebSocketSubscriber<T : WebSocketEvent>(
-    protected val publisher: UnicastProcessor<WebSocketEvent>,
+    protected val eventProcessor: UnicastProcessor<WebSocketEvent>,
     protected val user: User
 ) {
 
     protected var lastReceivedEvent: WebSocketEvent? = null
     private val typeRef: TypeReference<T> = object : TypeReference<T>() {}
+
+    init {
+        this.onConnect()
+    }
+
+    open fun onConnect() {
+        // no-op
+    }
 
     fun onReceive(event: String) = try {
         val convertedEvent: WebSocketEvent = WebSocketEvent.MAPPER.readValue(event, typeRef)
@@ -49,7 +57,7 @@ open class WebSocketSubscriber<T : WebSocketEvent>(
 
     protected open fun onNext(event: WebSocketEvent) {
         lastReceivedEvent = event
-        publisher.onNext(event)
+        eventProcessor.onNext(event)
     }
 
     open fun onError(error: Throwable) {
@@ -59,6 +67,6 @@ open class WebSocketSubscriber<T : WebSocketEvent>(
     open fun onComplete() {
         // no-op
         lastReceivedEvent = null
-        println("$user has disconnected")
+        println("$user has disconnected from the lobby")
     }
 }

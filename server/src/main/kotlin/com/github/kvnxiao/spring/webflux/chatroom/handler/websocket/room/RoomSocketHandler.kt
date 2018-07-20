@@ -15,7 +15,6 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.room
 
-import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.WebSocketSubscriber
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.HeartBeatEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
@@ -44,7 +43,7 @@ class RoomSocketHandler @Autowired constructor(
         val eventProcessor = room.eventProcessor
 
         // create handler for received payloads to be processed by the event processor
-        val receiveSubscriber = WebSocketSubscriber<WebSocketEvent>(eventProcessor, user)
+        val receiveSubscriber = RoomSocketSubscriber(lobby, eventProcessor, user)
 
         // send heartbeat every 30 seconds
         val heartbeatFlux = Flux.interval(Duration.ZERO, Duration.ofSeconds(30))
@@ -57,7 +56,6 @@ class RoomSocketHandler @Autowired constructor(
 
         // merge all fluxes that are to be sent
         val finalSendFlux = chatFlux.mergeWith(heartbeatFlux)
-        // TODO: filter send flux based on user
 
         // handle received payloads
         session.receive()

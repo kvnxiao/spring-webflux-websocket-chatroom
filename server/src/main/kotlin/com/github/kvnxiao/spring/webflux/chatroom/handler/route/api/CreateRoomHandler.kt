@@ -15,11 +15,13 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.handler.route.api
 
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
 import com.github.kvnxiao.spring.webflux.chatroom.model.request.CreateRoomRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
@@ -36,6 +38,10 @@ class CreateRoomHandler @Autowired constructor(
             .filter { it.attributes.containsKey(Session.USER) }
             .flatMap { request.bodyToMono<CreateRoomRequest>() }
             .flatMap { lobby.create(it.name, it.password) }
-            .flatMap { ServerResponse.ok().build() }
+            .flatMap {
+                ServerResponse.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .syncBody(WebSocketEvent.MAPPER.writeValueAsString(it))
+            }
             .switchIfEmpty(ServerResponse.status(HttpStatus.UNAUTHORIZED).build())
 }
