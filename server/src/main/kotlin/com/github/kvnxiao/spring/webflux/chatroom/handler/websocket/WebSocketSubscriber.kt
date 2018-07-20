@@ -16,6 +16,7 @@
 package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.MessageSendEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.User
 import reactor.core.publisher.UnicastProcessor
@@ -26,23 +27,27 @@ import java.io.IOException
  * received messages, errors, and completion signals.
  */
 open class WebSocketSubscriber<T : WebSocketEvent>(
-    protected val publisher: UnicastProcessor<T>,
+    protected val publisher: UnicastProcessor<WebSocketEvent>,
     protected val user: User
 ) {
 
-    protected var lastReceivedEvent: T? = null
+    protected var lastReceivedEvent: WebSocketEvent? = null
     private val typeRef: TypeReference<T> = object : TypeReference<T>() {}
 
-    fun onReceive(event: String) {
-        try {
-            val convertedEvent: T = WebSocketEvent.MAPPER.readValue(event, typeRef)
-            onNext(convertedEvent)
-        } catch (e: IOException) {
-            onError(e)
-        }
+    fun onReceive(event: String) = try {
+        val convertedEvent: WebSocketEvent = WebSocketEvent.MAPPER.readValue(event, typeRef)
+        onNext(
+            if (convertedEvent is MessageSendEvent) {
+                MessageSendEvent(convertedEvent.msg, user)
+            } else {
+                convertedEvent
+            }
+        )
+    } catch (e: IOException) {
+        onError(e)
     }
 
-    protected open fun onNext(event: T) {
+    protected open fun onNext(event: WebSocketEvent) {
         lastReceivedEvent = event
         publisher.onNext(event)
     }

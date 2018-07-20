@@ -43,8 +43,7 @@ class LobbySocketHandler @Autowired constructor(
         val eventProcessor = UnicastProcessor.create<WebSocketEvent>()
 
         // create handler for received payloads to be processed by the event processor
-        val receiveSubscriber = WebSocketSubscriber(
-            eventProcessor, user)
+        val receiveSubscriber = WebSocketSubscriber<WebSocketEvent>(eventProcessor, user)
 
         // send heartbeat every 30 seconds
         val heartbeatFlux = Flux.interval(Duration.ZERO, Duration.ofSeconds(30))

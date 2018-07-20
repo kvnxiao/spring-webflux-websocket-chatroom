@@ -18,7 +18,6 @@ package com.github.kvnxiao.spring.webflux.chatroom.handler.route.api
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
-import com.github.kvnxiao.spring.webflux.chatroom.model.request.CreateRoomRequest
 import com.github.kvnxiao.spring.webflux.chatroom.model.request.GetRoomRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus

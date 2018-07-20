@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.jsontype.NamedType
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatRoom
+import com.github.kvnxiao.spring.webflux.chatroom.model.User
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
 sealed class WebSocketEvent {
@@ -32,7 +33,8 @@ sealed class WebSocketEvent {
                 registerSubtypes(
                     NamedType(LatencyEvent::class.java, "l"),
                     NamedType(HeartBeatEvent::class.java, "h"),
-                    NamedType(LobbyListEvent::class.java, "lb")
+                    NamedType(LobbyListEvent::class.java, "lb"),
+                    NamedType(MessageReceivedEvent::class.java, "m")
                 )
             }
     }
@@ -49,3 +51,7 @@ object HeartBeatEvent : WebSocketEvent() {
 }
 
 data class LobbyListEvent(val data: Collection<ChatRoom>) : WebSocketEvent()
+
+data class MessageReceivedEvent(val msg: String) : WebSocketEvent()
+
+data class MessageSendEvent(val msg: String, val user: User) : WebSocketEvent()

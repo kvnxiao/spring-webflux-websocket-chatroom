@@ -18,7 +18,6 @@ package com.github.kvnxiao.spring.webflux.chatroom.handler.route
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
 import com.github.kvnxiao.spring.webflux.chatroom.model.User
-import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.Resource
 import org.springframework.http.MediaType
