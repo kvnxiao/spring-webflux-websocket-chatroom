@@ -25,9 +25,8 @@
 import axios, {AxiosResponse} from "axios"
 import { Component, Vue } from "vue-property-decorator"
 import NativeWebSocket from "../ts/NativeWebSocket"
-import {NotificationType} from "../ts/NotificationMessage"
 import Room from "../ts/Room"
-import WebSocketEvent, {EventType} from "../ts/WebSocketEvent"
+import WebSocketEvent, {EventType, MessageFromServerEvent, UserConnectDisconnectEvent} from "../ts/WebSocketEvent"
 
 @Component
 export default class Home extends Vue {
@@ -105,7 +104,11 @@ export default class Home extends Vue {
 
   public sendMessage(event: any) {
     if (this.currMessage !== "") {
-      this.messages.push(this.currMessage)
+      const msg = {
+        "@type": EventType.MessageToServer,
+        "msg": this.currMessage,
+      }
+      this.ws.send(msg)
       this.currMessage = ""
     }
   }
@@ -113,15 +116,29 @@ export default class Home extends Vue {
   /**
    * Parses incoming WebSocket event data
    */
-  public parseEvent(data: any) {
-    const event = data as WebSocketEvent
-    switch (event["@type"]) {
-      case EventType.HeartBeat:
-        console.log("Received heartbeat from server.")
-        break
-      case EventType.LatencyTest:
-        console.log(`Received latency test from server: ${(Date.now() - this.timestamp) / 2}ms latency.`)
-        break
+  public parseEvent(event: any) {
+    if (event["@type"]) {
+      switch (event["@type"]) {
+        case EventType.LatencyTest: {
+          console.log(`Received latency test from server: ${(Date.now() - this.timestamp) / 2}ms latency.`)
+          break
+        }
+        case EventType.MessageFromServer: {
+          const message = event as MessageFromServerEvent
+          this.messages.push(`${message.user.name}: ${message.msg}`)
+          break
+        }
+        case EventType.UserConnected: {
+          const message = event as UserConnectDisconnectEvent
+          this.messages.push(`${message.user.name} has joined the room.`)
+          break
+        }
+        case EventType.UserDisconnected: {
+          const message = event as UserConnectDisconnectEvent
+          this.messages.push(`${message.user.name} has left the room.`)
+          break
+        }
+      }
     }
   }
 }

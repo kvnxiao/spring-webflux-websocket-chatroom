@@ -16,7 +16,6 @@
 package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.lobby
 
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.WebSocketSubscriber
-import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.HeartBeatEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
@@ -39,28 +38,30 @@ class LobbySocketHandler @Autowired constructor(
     override fun handle(session: WebSocketSession): Mono<Void> {
         val user = session.attributes[Session.USER] as User
 
-        // create a unicast processor for handling websocket events for each user connected to the lobby
-        val eventProcessor = UnicastProcessor.create<WebSocketEvent>()
-
         // create handler for received payloads to be processed by the event processor
-        val receiveSubscriber = WebSocketSubscriber<WebSocketEvent>(eventProcessor, user)
-
-        // send heartbeat every 30 seconds
-        val heartbeatFlux = Flux.interval(Duration.ZERO, Duration.ofSeconds(30))
-            .map { session.pingMessage { it.wrap(HeartBeatEvent.byteArray()) } }
+        val receiveSubscriber = WebSocketSubscriber<WebSocketEvent>(
+            UnicastProcessor.create<WebSocketEvent>(),
+            user
+        )
 
         // send list of rooms available every 15 seconds
         val sendFlux = Flux.interval(Duration.ZERO, Duration.ofSeconds(15))
             .map { session.textMessage(lobby.listRoomsJson()) }
 
         // echo payloads received from the user, back to the user
-        val receivedFlux = eventProcessor.publish()
+        val receivedFlux = receiveSubscriber.globalEventProcessor.publish()
+            .autoConnect()
+            .map(WebSocketEvent::toJson)
+            .map(session::textMessage)
+
+        // latency tests
+        val localFlux = receiveSubscriber.localEventProcessor.publish()
             .autoConnect()
             .map(WebSocketEvent::toJson)
             .map(session::textMessage)
 
         // merge all fluxes that are to be sent
-        val finalSendFlux = Flux.merge(receivedFlux, sendFlux, heartbeatFlux)
+        val finalSendFlux = receivedFlux.mergeWith(sendFlux).mergeWith(localFlux)
 
         // handle received payloads
         session.receive()

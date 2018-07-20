@@ -4,7 +4,24 @@ export default interface WebSocketEvent {
 }
 
 export enum EventType {
-  HeartBeat = "h",
   LatencyTest = "l",
   LobbyList = "lb",
+  MessageToServer = "m",
+  MessageFromServer = "s",
+  UserConnected = "uc",
+  UserDisconnected = "ud",
+}
+
+export interface User {
+  name: string,
+  id: string
+}
+
+export interface MessageFromServerEvent {
+  msg: string,
+  user: User
+}
+
+export interface UserConnectDisconnectEvent {
+  user: User
 }

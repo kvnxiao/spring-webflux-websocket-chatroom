@@ -16,9 +16,12 @@
 package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.LatencyEvent
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.MessageReceivedEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.MessageSendEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.User
+import mu.KLogging
 import reactor.core.publisher.UnicastProcessor
 import java.io.IOException
 
@@ -27,12 +30,14 @@ import java.io.IOException
  * received messages, errors, and completion signals.
  */
 open class WebSocketSubscriber<T : WebSocketEvent>(
-    protected val eventProcessor: UnicastProcessor<WebSocketEvent>,
+    val globalEventProcessor: UnicastProcessor<WebSocketEvent>,
     protected val user: User
 ) {
 
-    protected var lastReceivedEvent: WebSocketEvent? = null
+    companion object : KLogging()
+
     private val typeRef: TypeReference<T> = object : TypeReference<T>() {}
+    val localEventProcessor: UnicastProcessor<WebSocketEvent> = UnicastProcessor.create()
 
     init {
         this.onConnect()
@@ -42,31 +47,28 @@ open class WebSocketSubscriber<T : WebSocketEvent>(
         // no-op
     }
 
-    fun onReceive(event: String) = try {
-        val convertedEvent: WebSocketEvent = WebSocketEvent.MAPPER.readValue(event, typeRef)
-        onNext(
-            if (convertedEvent is MessageSendEvent) {
-                MessageSendEvent(convertedEvent.msg, user)
-            } else {
-                convertedEvent
+    fun onReceive(event: String) {
+        try {
+            val convertedEvent: WebSocketEvent = WebSocketEvent.MAPPER.readValue(event, typeRef)
+            when (convertedEvent) {
+                LatencyEvent -> localEventProcessor.onNext(convertedEvent)
+                is MessageReceivedEvent -> onNext(MessageSendEvent(convertedEvent.msg, user))
+                else -> onNext(convertedEvent)
             }
-        )
-    } catch (e: IOException) {
-        onError(e)
+        } catch (e: IOException) {
+            onError(e)
+        }
     }
 
     protected open fun onNext(event: WebSocketEvent) {
-        lastReceivedEvent = event
-        eventProcessor.onNext(event)
+        globalEventProcessor.onNext(event)
     }
 
     open fun onError(error: Throwable) {
-        println(error)
+        logger.error { error }
     }
 
     open fun onComplete() {
         // no-op
-        lastReceivedEvent = null
-        println("$user has disconnected from the lobby")
     }
 }

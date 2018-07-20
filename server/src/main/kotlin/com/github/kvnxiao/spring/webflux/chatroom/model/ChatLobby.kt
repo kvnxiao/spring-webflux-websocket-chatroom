@@ -60,14 +60,11 @@ class ChatLobby {
         val room = idToRoomsMap[roomId] ?: return
         room.users.remove(user)
 
-        println("Removed user $user from room $room")
-
         if (room.isEmpty()) {
             room.name.let {
                 roomNames.remove(it)
                 idToRoomsMap.remove(it)
             }
-            println("Deleted room $room since it is now empty")
         }
     }
 

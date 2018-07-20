@@ -158,7 +158,9 @@ export default class Lobby extends Vue {
     )
     .then((res: AxiosResponse) => {
       if (res.status === 200) {
-        console.log(res.data)
+        // redirect user to new room
+        const room = res.data as Room
+        window.location.pathname = `/room/${room.id}`
       }
     })
   }
@@ -179,9 +181,6 @@ export default class Lobby extends Vue {
   public parseEvent(data: any) {
     const event = data as WebSocketEvent
     switch (event["@type"]) {
-      case EventType.HeartBeat:
-        console.log("Received heartbeat from server.")
-        break
       case EventType.LatencyTest:
         console.log(`Received latency test from server: ${(Date.now() - this.timestamp) / 2}ms latency.`)
         break
