@@ -1,6 +1,5 @@
 export default interface WebSocketEvent {
   "@type": EventType
-  data?: any
 }
 
 export enum EventType {

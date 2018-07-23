@@ -45,33 +45,36 @@
               h3.title.is-size-4 It seems like there're no rooms beyond this point.
               h3.title.is-size-5 Make your own room!
           hr
+          latency-bar
           button.button.is-primary.circular.bigger(@click="showModal(true)") Create a room
     .hero-footer
     notification(:messages="messages")
 </template>
 
 <script lang="ts">
+import LatencyBar from "@/components/LatencyBar.vue"
 import LobbyTableRoom from "@/components/LobbyTableRoom.vue"
 import Notification from "@/components/Notification.vue"
-import NativeWebSocket from "@/ts/NativeWebSocket.ts"
-import NotificationMessage, { NotificationType } from "@/ts/NotificationMessage.ts"
+import LatencyTest from "@/ts/LatencyTest"
+import NativeWebSocket from "@/ts/NativeWebSocket"
+import NotificationMessage, { NotificationType } from "@/ts/NotificationMessage"
 import Room from "@/ts/Room.ts"
-import WebSocketEvent, { EventType } from "@/ts/WebSocketEvent.ts"
-import axios, {AxiosResponse} from "axios"
+import WebSocketEvent, { EventType } from "@/ts/WebSocketEvent"
+import axios, { AxiosResponse } from "axios"
 import { Component, Vue } from "vue-property-decorator"
 
 @Component({
   components: {
     Notification,
     LobbyTableRoom,
+    LatencyBar,
   },
 })
 export default class Lobby extends Vue {
   private rooms: Room[] = []
   private isModal: boolean = false
   private ws!: NativeWebSocket<WebSocketEvent>
-  private timestamp: number = 0
-  private latencyInterval!: number
+  private latencyTest!: LatencyTest
 
   // Notifications
   private messages: NotificationMessage[] = []
@@ -89,8 +92,18 @@ export default class Lobby extends Vue {
     // Connect to websocket endpoint
     this.ws = new NativeWebSocket(undefined, "/ws")
 
+    // set latency test interval
+    this.latencyTest = new LatencyTest(10_000, () => {
+      if (this.ws.readyState === this.ws.OPEN) {
+        this.ws.send({ "@type": EventType.LatencyTest })
+      }
+    })
+
     this.ws.onOpen = (event: Event) => {
-      this.messages.push({ msg: "Connection to the server has been established", type: NotificationType.Success })
+      this.messages.push({
+        msg: "Connection to the server has been established",
+        type: NotificationType.Success,
+      })
     }
 
     this.ws.onMessage = (event: MessageEvent) => {
@@ -103,21 +116,19 @@ export default class Lobby extends Vue {
     }
 
     this.ws.onError = (error: Event) => {
-      this.messages.push({ msg: "An error occurred with the server connection...", type: NotificationType.Danger })
+      this.messages.push({
+        msg: "An error occurred with the server connection...",
+        type: NotificationType.Danger,
+      })
     }
 
     this.ws.onClose = (event: CloseEvent) => {
-      window.clearInterval(this.latencyInterval)
-      this.messages.push({ msg: "Connection to the server has been closed.", type: NotificationType.Warning })
+      this.latencyTest.clearInterval()
+      this.messages.push({
+        msg: "Connection to the server has been closed.",
+        type: NotificationType.Warning,
+      })
     }
-
-    // test for latency in the lobby
-    this.latencyInterval = window.setInterval(() => {
-      if (this.ws.getReadyState() === this.ws.OPEN) {
-        this.timestamp = Date.now()
-        this.ws.send({ "@type": EventType.LatencyTest })
-      }
-    }, 10000)
   }
 
   /**
@@ -128,7 +139,10 @@ export default class Lobby extends Vue {
   public created() {
     this.ws.connect()
 
-    this.messages.push({ msg: "Connecting to the server...", type: NotificationType.Link })
+    this.messages.push({
+      msg: "Connecting to the server...",
+      type: NotificationType.Link,
+    })
   }
 
   /**
@@ -151,18 +165,17 @@ export default class Lobby extends Vue {
             name: this.createRoomName,
             pwd: this.createRoomPwd,
           }
-    axios.post(
-        "/api/createroom",
-        roomReq,
-        { headers: { "Content-Type": "application/json" } },
-    )
-    .then((res: AxiosResponse) => {
-      if (res.status === 200) {
-        // redirect user to new room
-        const room = res.data as Room
-        window.location.pathname = `/room/${room.id}`
-      }
-    })
+    axios
+      .post("/api/createroom", roomReq, {
+        headers: { "Content-Type": "application/json" },
+      })
+      .then((res: AxiosResponse) => {
+        if (res.status === 200) {
+          // redirect user to new room
+          const room = res.data as Room
+          window.location.pathname = `/room/${room.id}`
+        }
+      })
   }
 
   /**
@@ -178,15 +191,19 @@ export default class Lobby extends Vue {
   /**
    * Parses incoming WebSocket event data
    */
-  public parseEvent(data: any) {
-    const event = data as WebSocketEvent
-    switch (event["@type"]) {
-      case EventType.LatencyTest:
-        console.log(`Received latency test from server: ${(Date.now() - this.timestamp) / 2}ms latency.`)
-        break
-      case EventType.LobbyList:
-        this.rooms = event.data as Room[]
-        break
+  public parseEvent(event: any) {
+    if (event["@type"]) {
+      switch (event["@type"]) {
+        case EventType.LatencyTest: {
+          const latency = this.latencyTest.latency
+          this.$store.commit("setLatency", latency)
+          break
+        }
+        case EventType.LobbyList: {
+          this.rooms = event.rooms as Room[]
+          break
+        }
+      }
     }
   }
 }

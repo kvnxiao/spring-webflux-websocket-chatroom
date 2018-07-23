@@ -48,7 +48,7 @@ sealed class WebSocketEvent {
 
 @JsonDeserialize(using = LatencyEventDeserializer::class)
 object LatencyEvent : WebSocketEvent()
-data class LobbyListEvent(val data: Collection<ChatRoom>) : WebSocketEvent()
+data class LobbyListEvent(val rooms: Collection<ChatRoom>) : WebSocketEvent()
 data class MessageReceivedEvent(val msg: String) : WebSocketEvent()
 data class MessageSendEvent(val msg: String, val user: User) : WebSocketEvent()
 data class UserConnectedEvent(val user: User) : WebSocketEvent()

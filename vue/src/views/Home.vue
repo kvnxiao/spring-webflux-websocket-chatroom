@@ -33,7 +33,7 @@ export default class Home extends Vue {
       )
       .then((res: AxiosResponse) => {
         if (res.status === 200) {
-          this.$store.commit({ type: "setName", name: this.name })
+          this.$store.commit("setName", this.name)
           window.location.href = "/lobby"
         }
       })

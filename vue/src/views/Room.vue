@@ -5,6 +5,7 @@
     .hero-body
       .container.has-text-centered
         #chat.box
+          latency-bar
           ul#chat-msgs
             li(v-for="message in messages") {{ message }}
         h1.title Chat
@@ -22,21 +23,26 @@
 </template>
 
 <script lang="ts">
+import LatencyBar from "@/components/LatencyBar.vue"
+import LatencyTest from "@/ts/LatencyTest"
 import axios, {AxiosResponse} from "axios"
 import { Component, Vue } from "vue-property-decorator"
 import NativeWebSocket from "../ts/NativeWebSocket"
 import Room from "../ts/Room"
 import WebSocketEvent, {EventType, MessageFromServerEvent, UserConnectDisconnectEvent} from "../ts/WebSocketEvent"
 
-@Component
+@Component({
+  components: {
+    LatencyBar,
+  },
+})
 export default class Home extends Vue {
   private name: string = ""
   private roomName: string = "..."
   private messages: string[] = []
   private currMessage: string = ""
-  private timestamp: number = 0
-  private latencyInterval!: number
   private ws!: NativeWebSocket<WebSocketEvent>
+  private latencyTest!: LatencyTest
 
   /**
    * Vue beforeCreate lifecycle hook.
@@ -46,6 +52,13 @@ export default class Home extends Vue {
   public beforeCreate() {
     // Connect to websocket endpoint
     this.ws = new NativeWebSocket(undefined, "/ws")
+
+    // set latency test interval
+    this.latencyTest = new LatencyTest(10_000, () => {
+      if (this.ws.readyState === this.ws.OPEN) {
+        this.ws.send({ "@type": EventType.LatencyTest })
+      }
+    })
 
     this.ws.onOpen = (event: Event) => {
       // this.messages.push({ msg: "Connection to the server has been established", type: NotificationType.Success })
@@ -65,23 +78,15 @@ export default class Home extends Vue {
     }
 
     this.ws.onClose = (event: CloseEvent) => {
-      window.clearInterval(this.latencyInterval)
+      this.latencyTest.clearInterval()
       // this.messages.push({ msg: "Connection to the server has been closed.", type: NotificationType.Warning })
     }
-
-    // test for latency in the lobby
-    this.latencyInterval = window.setInterval(() => {
-      if (this.ws.getReadyState() === this.ws.OPEN) {
-        this.timestamp = Date.now()
-        this.ws.send({ "@type": EventType.LatencyTest })
-      }
-    }, 10000)
   }
 
   public created() {
     this.ws.connect()
 
-    this.name = this.$store.getters.getName.name
+    this.name = this.$store.getters.getName
     axios.post(
         "/api/getroom",
         { id: this.$route.params.room },
@@ -120,7 +125,8 @@ export default class Home extends Vue {
     if (event["@type"]) {
       switch (event["@type"]) {
         case EventType.LatencyTest: {
-          console.log(`Received latency test from server: ${(Date.now() - this.timestamp) / 2}ms latency.`)
+          const latency = this.latencyTest.latency
+          this.$store.commit("setLatency", latency)
           break
         }
         case EventType.MessageFromServer: {
@@ -146,6 +152,7 @@ export default class Home extends Vue {
 
 <style lang="scss">
 #chat.box {
+  position: relative;
   text-align: left;
   border-radius: 1.5rem;
   margin: 0 auto 2rem auto;

@@ -45,11 +45,11 @@ export default class NativeWebSocket<T> {
     }
   }
 
-  public getReadyState(): number {
+  public get readyState(): number {
     return this.ws.readyState
   }
 
-  public getProtocol(): string {
+  public get protocol(): string {
     return this.ws.protocol
   }
 }
