@@ -7,7 +7,9 @@
         #chat.box
           latency-bar
           ul#chat-msgs
-            li(v-for="message in messages") {{ message }}
+            li(v-for="message in messages")
+              .user {{ message.user }}
+              .msg  {{ message.message }}
         h1.title Chat
         p.subtitle {{ subtitle }}
         .field
@@ -28,7 +30,7 @@ import LatencyTest from "@/ts/LatencyTest"
 import axios, {AxiosResponse} from "axios"
 import { Component, Vue } from "vue-property-decorator"
 import NativeWebSocket from "../ts/NativeWebSocket"
-import Room from "../ts/Room"
+import Room, {ChatMessage} from "../ts/Room"
 import WebSocketEvent, {EventType, MessageFromServerEvent, UserConnectDisconnectEvent} from "../ts/WebSocketEvent"
 
 @Component({
@@ -39,7 +41,7 @@ import WebSocketEvent, {EventType, MessageFromServerEvent, UserConnectDisconnect
 export default class Home extends Vue {
   private name: string = ""
   private roomName: string = "..."
-  private messages: string[] = []
+  private messages: ChatMessage[] = []
   private currMessage: string = ""
   private ws!: NativeWebSocket<WebSocketEvent>
   private latencyTest!: LatencyTest
@@ -131,17 +133,17 @@ export default class Home extends Vue {
         }
         case EventType.MessageFromServer: {
           const message = event as MessageFromServerEvent
-          this.messages.push(`${message.user.name}: ${message.msg}`)
+          this.messages.push({ type: 0, user: `${message.user.name}:`, message: message.msg })
           break
         }
         case EventType.UserConnected: {
           const message = event as UserConnectDisconnectEvent
-          this.messages.push(`${message.user.name} has joined the room.`)
+          this.messages.push({ type: 1, user: message.user.name, message: "has joined the room." })
           break
         }
         case EventType.UserDisconnected: {
           const message = event as UserConnectDisconnectEvent
-          this.messages.push(`${message.user.name} has left the room.`)
+          this.messages.push({ type: 1, user: message.user.name, message: "has left the room." })
           break
         }
       }
@@ -161,9 +163,18 @@ export default class Home extends Vue {
   max-width: 85vw;
   height: 12rem;
   min-height: 33vh;
+
   ul {
     width: 100%;
     overflow-y: auto;
+
+    .user {
+      font-weight: 700;
+    }
+
+    .user, .msg {
+      display: inline;
+    }
   }
 
   box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.302),
