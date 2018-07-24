@@ -50,8 +50,8 @@ class WebSocketConfiguration @Autowired constructor(
     @Bean
     fun handlerAdapter(): WebSocketHandlerAdapter = object : WebSocketHandlerAdapter() {
         override fun handle(exchange: ServerWebExchange, handler: Any): Mono<HandlerResult> {
-            (this.webSocketService as HandshakeWebSocketService)
-                .setSessionAttributePredicate { it == Session.USER }
+            val handshakeWebSocketService = this.webSocketService as HandshakeWebSocketService
+            handshakeWebSocketService.setSessionAttributePredicate { it == Session.ROOM_ID || it == Session.USER }
             return super.handle(exchange, handler)
         }
     }

@@ -22,20 +22,24 @@
           span.icon
             i.fas.fa-paper-plane
     .hero-footer
+    notification(:messages="notifs")
 </template>
 
 <script lang="ts">
 import LatencyBar from "@/components/LatencyBar.vue"
+import Notification from "@/components/Notification.vue"
 import LatencyTest from "@/ts/LatencyTest"
 import axios, {AxiosResponse} from "axios"
 import { Component, Vue } from "vue-property-decorator"
 import NativeWebSocket from "../ts/NativeWebSocket"
+import NotificationMessage, {NotificationType} from "../ts/NotificationMessage"
 import Room, {ChatMessage} from "../ts/Room"
 import WebSocketEvent, {EventType, MessageFromServerEvent, UserConnectDisconnectEvent} from "../ts/WebSocketEvent"
 
 @Component({
   components: {
     LatencyBar,
+    Notification,
   },
 })
 export default class Home extends Vue {
@@ -45,6 +49,9 @@ export default class Home extends Vue {
   private currMessage: string = ""
   private ws!: NativeWebSocket<WebSocketEvent>
   private latencyTest!: LatencyTest
+
+  // Notifications
+  private notifs: NotificationMessage[] = []
 
   /**
    * Vue beforeCreate lifecycle hook.
@@ -63,7 +70,10 @@ export default class Home extends Vue {
     })
 
     this.ws.onOpen = (event: Event) => {
-      // this.messages.push({ msg: "Connection to the server has been established", type: NotificationType.Success })
+      this.notifs.push({
+        msg: "Connection to the server has been established",
+        type: NotificationType.Success,
+      })
     }
 
     this.ws.onMessage = (event: MessageEvent) => {
@@ -76,12 +86,18 @@ export default class Home extends Vue {
     }
 
     this.ws.onError = (error: Event) => {
-      // this.messages.push({ msg: "An error occurred with the server connection...", type: NotificationType.Danger })
+      this.notifs.push({
+        msg: "An error occurred with the server connection...",
+        type: NotificationType.Danger,
+      })
     }
 
     this.ws.onClose = (event: CloseEvent) => {
       this.latencyTest.clearInterval()
-      // this.messages.push({ msg: "Connection to the server has been closed.", type: NotificationType.Warning })
+      this.notifs.push({
+        msg: "Connection to the server has been closed.",
+        type: NotificationType.Warning,
+      })
     }
   }
 
@@ -98,6 +114,10 @@ export default class Home extends Vue {
       if (res.status === 200) {
         this.roomName = (res.data as Room).name
       }
+    })
+    this.notifs.push({
+      msg: "Connecting to the server...",
+      type: NotificationType.Link,
     })
   }
 

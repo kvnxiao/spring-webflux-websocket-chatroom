@@ -15,56 +15,47 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.model
 
-import com.github.kvnxiao.spring.webflux.chatroom.util.RoomId
-import com.github.kvnxiao.spring.webflux.chatroom.util.RoomName
+import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.error.UserStillConnectedError
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.LobbyListEvent
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
+import java.util.concurrent.ConcurrentHashMap
 
 @Component
 class ChatLobby {
 
-    private val idToRoomsMap: MutableMap<RoomId, ChatRoom> = mutableMapOf()
-    private val userToRoomIdMap: MutableMap<User, RoomId> = mutableMapOf()
-    private val roomNames: MutableSet<RoomName> = mutableSetOf()
+    private val idToRoomsMap: MutableMap<String, ChatRoom> = ConcurrentHashMap()
+    private val userToRooms: MutableMap<User, ChatRoom> = ConcurrentHashMap()
 
     fun count(): Mono<Int> = idToRoomsMap.size.toMono()
 
     fun create(name: String, password: String = ""): Mono<ChatRoom> {
-        return if (roomNames.contains(name)) {
-            Mono.empty()
-        } else {
-            return Mono.just(ChatRoom(name, password))
-                .map {
-                    roomNames.add(it.name)
-                    idToRoomsMap[it.id] = it
-                    return@map it
-                }
-        }
+        return Mono.just(ChatRoom(name, password))
+            .map {
+                idToRoomsMap[it.id] = it
+                it
+            }
     }
 
     fun exists(id: String): Boolean = idToRoomsMap.containsKey(id)
 
     fun get(id: String): ChatRoom? = idToRoomsMap[id]
 
-    fun getRoom(user: User): ChatRoom? = userToRoomIdMap[user]?.let { idToRoomsMap[it] }
+    fun userInRoom(user: User): Boolean = userToRooms.containsKey(user)
 
-    fun addUserToRoom(user: User, room: ChatRoom) {
-        userToRoomIdMap[user] = room.id
-        room.users.add(user)
+    fun addUserToRoom(user: User, room: ChatRoom): Mono<Boolean> {
+        return Mono.just(user).filter { !userInRoom(it) }.map {
+            println("USER NOT IN ROOM")
+            userToRooms[user] = room
+            room.users.add(user)
+        }.switchIfEmpty(Mono.error(UserStillConnectedError(user)))
     }
 
-    fun removeUserFromRoom(user: User) {
-        val roomId = userToRoomIdMap.remove(user) ?: return
-        val room = idToRoomsMap[roomId] ?: return
-        room.users.remove(user)
-
-        if (room.isEmpty()) {
-            room.name.let {
-                roomNames.remove(it)
-                idToRoomsMap.remove(it)
-            }
+    fun removeUserFromRoom(user: User, room: ChatRoom) {
+        if (userInRoom(user)) {
+            userToRooms.remove(user)
+            room.users.remove(user)
         }
     }
 

@@ -17,7 +17,6 @@ package com.github.kvnxiao.spring.webflux.chatroom.handler.route
 
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
-import com.github.kvnxiao.spring.webflux.chatroom.model.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.Resource
 import org.springframework.http.MediaType
@@ -34,12 +33,8 @@ class RoomHandler @Autowired constructor(
 
     fun enterRoom(request: ServerRequest, index: Resource): Mono<ServerResponse> =
         request.session()
-            .filter { it.attributes.containsKey(Session.USER) }
-            .map { request.pathVariable("id") }
-            .filter(lobby::exists)
-            .map { lobby.get(it)!! }
-            .zipWith(request.session().map { it.attributes[Session.USER] as User })
-            .map { lobby.addUserToRoom(it.t2, it.t1) }
+            .filter { it.attributes.containsKey(Session.USER) && lobby.exists(request.pathVariable("id")) }
+            .map { it.attributes[Session.ROOM_ID] = request.pathVariable("id") }
             .flatMap { ServerResponse.ok().contentType(MediaType.TEXT_HTML).syncBody(index) }
             .switchIfEmpty(ServerResponse.temporaryRedirect(URI.create("/lobby")).build())
 }

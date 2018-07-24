@@ -39,14 +39,6 @@ open class WebSocketSubscriber<T : WebSocketEvent>(
     private val typeRef: TypeReference<T> = object : TypeReference<T>() {}
     val localEventProcessor: UnicastProcessor<WebSocketEvent> = UnicastProcessor.create()
 
-    init {
-        this.onConnect()
-    }
-
-    open fun onConnect() {
-        // no-op
-    }
-
     fun onReceive(event: String) {
         try {
             val convertedEvent: WebSocketEvent = WebSocketEvent.MAPPER.readValue(event, typeRef)

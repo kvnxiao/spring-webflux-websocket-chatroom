@@ -16,6 +16,6 @@
 package com.github.kvnxiao.spring.webflux.chatroom.model
 
 object Session {
-
     const val USER = "user"
+    const val ROOM_ID = "room"
 }

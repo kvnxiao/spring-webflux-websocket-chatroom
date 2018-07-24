@@ -63,12 +63,14 @@ class LobbySocketHandler @Autowired constructor(
         // merge all fluxes that are to be sent
         val finalSendFlux = receivedFlux.mergeWith(sendFlux).mergeWith(localFlux)
 
-        // handle received payloads
+        // handle receive and send payloads
         session.receive()
             .filter { it.type == WebSocketMessage.Type.TEXT }
             .map(WebSocketMessage::getPayloadAsText)
-            .subscribe(receiveSubscriber::onReceive, receiveSubscriber::onError, receiveSubscriber::onComplete)
-        // handle send payloads
+            .doOnNext(receiveSubscriber::onReceive)
+            .doOnError(receiveSubscriber::onError)
+            .doFinally { receiveSubscriber.onComplete() }
+            .subscribe()
         return session.send(finalSendFlux)
     }
 }

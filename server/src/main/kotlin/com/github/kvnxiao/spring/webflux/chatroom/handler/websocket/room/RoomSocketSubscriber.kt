@@ -16,26 +16,21 @@
 package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.room
 
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.WebSocketSubscriber
-import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.UserConnectedEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.UserDisconnectedEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
+import com.github.kvnxiao.spring.webflux.chatroom.model.ChatRoom
 import com.github.kvnxiao.spring.webflux.chatroom.model.User
-import reactor.core.publisher.UnicastProcessor
 
 class RoomSocketSubscriber(
     val lobby: ChatLobby,
-    eventProcessor: UnicastProcessor<WebSocketEvent>,
+    val room: ChatRoom,
     user: User
 )
-    : WebSocketSubscriber<WebSocketEvent>(eventProcessor, user) {
+    : WebSocketSubscriber<WebSocketEvent>(room.eventProcessor, user) {
 
     override fun onComplete() {
-        lobby.removeUserFromRoom(user)
+        lobby.removeUserFromRoom(user, room)
         globalEventProcessor.onNext(UserDisconnectedEvent(user))
-    }
-
-    override fun onConnect() {
-        globalEventProcessor.onNext(UserConnectedEvent(user))
     }
 }

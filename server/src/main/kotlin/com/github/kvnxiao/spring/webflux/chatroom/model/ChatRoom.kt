@@ -20,13 +20,14 @@ import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSoc
 import com.github.kvnxiao.spring.webflux.chatroom.serdes.ChatRoomSerializer
 import org.hashids.Hashids
 import reactor.core.publisher.UnicastProcessor
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @JsonSerialize(using = ChatRoomSerializer::class)
 data class ChatRoom(val name: String, val password: String = "") {
 
     val id: String = generateId()
-    val users: MutableList<User> = mutableListOf()
+    val users: MutableSet<User> = ConcurrentHashMap.newKeySet()
     val eventProcessor: UnicastProcessor<WebSocketEvent> = UnicastProcessor.create()
     val chatFlux = eventProcessor.publish()
         .autoConnect(1)
