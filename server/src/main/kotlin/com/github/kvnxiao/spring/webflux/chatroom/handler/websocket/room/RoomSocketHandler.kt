@@ -15,7 +15,6 @@
  */
 package com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.room
 
-import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.UserConnectedEvent
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.model.ChatLobby
 import com.github.kvnxiao.spring.webflux.chatroom.model.Session
@@ -27,7 +26,6 @@ import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketMessage
 import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Mono
-import reactor.core.publisher.toMono
 import java.time.Duration
 
 @Component
@@ -48,25 +46,30 @@ class RoomSocketHandler @Autowired constructor(
         // create handler for received payloads to be processed by the event processor
         val receiveSubscriber = RoomSocketSubscriber(lobby, room, user)
 
+        // try up to 3 times with exponential back-off to check if user is NOT in a room already
         return lobby.addUserToRoom(user, room)
             .retryBackoff(3, Duration.ofMillis(500), Duration.ofMillis(3000))
             .onErrorResume {
-                println("!!closing session, $it")
-                session.close().cast(Boolean::class.java)
+                // close connection if we failed to add a user to the room, which in other words means
+                // the user was still in a room for the whole duration of the checks
+                session.close()
+                    // cast Mono<Void> as Mono<Boolean> to simply allow the completion signal to propagate
+                    .cast(Boolean::class.java)
             }
+            // only proceed with websocket connection handling if user is not already in a room
             .flatMap {
-                println("!!connecting session")
+
+                // room-global chat messages
                 val finalFlux = room.chatFlux
-                    // latency tests
+                    // latency test messages (local)
                     .mergeWith(receiveSubscriber.localEventProcessor.publish().autoConnect(1))
-                    // user connected message
-                    .mergeWith(UserConnectedEvent(user).toMono())
                     .map(WebSocketEvent::toJson)
                     .map(session::textMessage)
 
                 session.receive()
                     .filter { it.type == WebSocketMessage.Type.TEXT }
                     .map(WebSocketMessage::getPayloadAsText)
+                    .doOnSubscribe { receiveSubscriber.onSubscribe() }
                     .doOnNext(receiveSubscriber::onReceive)
                     .doOnError(receiveSubscriber::onError)
                     .doFinally { receiveSubscriber.onComplete() }

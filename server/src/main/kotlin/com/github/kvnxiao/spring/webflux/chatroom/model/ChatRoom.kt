@@ -19,24 +19,44 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.WebSocketEvent
 import com.github.kvnxiao.spring.webflux.chatroom.serdes.ChatRoomSerializer
 import org.hashids.Hashids
+import reactor.core.Disposable
+import reactor.core.publisher.Mono
 import reactor.core.publisher.UnicastProcessor
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import java.util.function.Consumer
 
 @JsonSerialize(using = ChatRoomSerializer::class)
 data class ChatRoom(val name: String, val password: String = "") {
 
     val id: String = generateId()
-    val users: MutableSet<User> = ConcurrentHashMap.newKeySet()
     val eventProcessor: UnicastProcessor<WebSocketEvent> = UnicastProcessor.create()
-    val chatFlux = eventProcessor.publish()
+    val chatFlux = eventProcessor.replay(25)
         .autoConnect(1)
+
+    var delete: Disposable? = null
+
+    private val users: MutableSet<User> = ConcurrentHashMap.newKeySet()
+
+    private fun isEmpty(): Boolean = users.size == 0
 
     fun count(): Int = users.size
 
-    fun isEmpty(): Boolean = users.size == 0
-
     fun hasPassword(): Boolean = password.isNotEmpty()
+
+    fun addUser(user: User): Boolean {
+        delete?.dispose()
+        return users.add(user)
+    }
+
+    fun removeUser(user: User, timerTask: Consumer<in Long>): Boolean {
+        delete = Mono.delay(Duration.ofSeconds(60))
+            .filter { this.isEmpty() }
+            .doOnNext(timerTask)
+            .subscribe()
+        return users.remove(user)
+    }
 
     companion object {
         private val incr = AtomicLong()
@@ -50,5 +70,9 @@ data class ChatRoom(val name: String, val password: String = "") {
             hash.decode(code).let {
                 if (it.isEmpty()) -1 else it[0]
             }
+    }
+
+    override fun toString(): String {
+        return "ChatRoom(name='$name', id='$id')"
     }
 }

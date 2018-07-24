@@ -63,4 +63,8 @@ open class WebSocketSubscriber<T : WebSocketEvent>(
     open fun onComplete() {
         // no-op
     }
+
+    open fun onSubscribe() {
+        // no-op
+    }
 }

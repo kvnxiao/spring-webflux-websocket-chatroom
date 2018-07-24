@@ -17,13 +17,17 @@ package com.github.kvnxiao.spring.webflux.chatroom.model
 
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.error.UserStillConnectedError
 import com.github.kvnxiao.spring.webflux.chatroom.handler.websocket.event.LobbyListEvent
+import mu.KLogging
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
 
 @Component
 class ChatLobby {
+
+    companion object : KLogging()
 
     private val idToRoomsMap: MutableMap<String, ChatRoom> = ConcurrentHashMap()
     private val userToRooms: MutableMap<User, ChatRoom> = ConcurrentHashMap()
@@ -44,18 +48,36 @@ class ChatLobby {
 
     fun userInRoom(user: User): Boolean = userToRooms.containsKey(user)
 
+    /**
+     * Returns a Mono<Boolean> that signifies whether the user was added to the room.
+     * This should always return true since it checks if the user is not already in a room before adding the user,
+     * otherwise it will yield a [UserStillConnectedError] error.
+     *
+     * A back-off retry on this method is used to prevent multiple connections for a single user, and to prevent
+     * out-of-order websocket close frames for when a user refreshes the WebSocket connection (the page).
+     */
     fun addUserToRoom(user: User, room: ChatRoom): Mono<Boolean> {
         return Mono.just(user).filter { !userInRoom(it) }.map {
-            println("USER NOT IN ROOM")
             userToRooms[user] = room
-            room.users.add(user)
+            room.addUser(user)
         }.switchIfEmpty(Mono.error(UserStillConnectedError(user)))
     }
 
+    /**
+     * Removes a user from the specified room.
+     * Done on cleanup when a WebSocket connection is closed.
+     */
     fun removeUserFromRoom(user: User, room: ChatRoom) {
-        if (userInRoom(user)) {
+        val userRoom = userToRooms[user]!!
+        if (userRoom == room) {
             userToRooms.remove(user)
-            room.users.remove(user)
+            userRoom.removeUser(user, Consumer {
+                logger.debug { "$room has been empty for 60 seconds... deleting room and purging from the lobby." }
+                idToRoomsMap.remove(room.id)
+            })
+        } else {
+            throw IllegalStateException(
+                "Attempted to remove $user from a room they were never in! Requested room was $room, but user was in room $userRoom")
         }
     }
 
