@@ -1,14 +1,14 @@
 buildscript {
     ext {
-        springboot_version = '2.1.0.BUILD-SNAPSHOT'
+        springboot_version = '2.1.1.RELEASE'
         hashids_version = '1.0.3'
     }
 
     repositories {
         jcenter()
-        maven { url("https://repo.spring.io/libs-snapshot") }
         maven { url("https://repo.spring.io/plugins-release/") }
     }
+
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springboot_version}")
     }
@@ -24,14 +24,11 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 bootJar {
-    baseName = 'spring-webflux-websocket-chatroom-server'
     version = '0.1.0'
 }
 
 repositories {
     jcenter()
-    maven { url("https://repo.spring.io/milestone") }
-    maven { url("https://repo.spring.io/snapshot") }
 }
 
 dependencies {
