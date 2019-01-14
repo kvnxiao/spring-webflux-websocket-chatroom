@@ -77,7 +77,7 @@ subprojects {
             trimTrailingWhitespace()
             endWithNewline()
             ktlint("0.29.0")
-            licenseHeaderFile "${rootProject.projectDir}/LICENSE_HEADER"
+            licenseHeaderFile "${rootProject.projectDir}/docs/spotless.header"
         }
     }
 
